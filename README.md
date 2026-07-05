@@ -1,4 +1,18 @@
-This GitHub repository contains the results and replication package for Spencer Cooper-Ohm and Jeff DeSimone's cost-benefit analysis of NC HB 868. It is divided into three main components:
+<p align="center">
+  <a href="executive_summary.pdf">
+    <img src="assets/executive_summary_preview.png" alt="Executive Summary — The Cost and Benefit of NC HB 868" width="85%">
+  </a>
+</p>
+
+<p align="center">
+  <strong><a href="executive_summary.pdf">📄 Read the full Executive Summary (PDF)</a></strong>
+  &nbsp;·&nbsp;
+  <a href="methodology.pdf">Methodology &amp; Results (PDF)</a>
+</p>
+
+---
+
+This GitHub repository contains the results and replication package for Spencer Cooper-Ohm And Jeff DeSimone's cost-benefit analysis of NC HB 868. It is divided into three main components:
 
 
 
@@ -7,8 +21,8 @@ This GitHub repository contains the results and replication package for Spencer 
 * The replication folder: our methodology is fully replicable using publicly available data and our provided do-files. To replicate our analysis:
 
   1. Follow the directions in data/data\_structure.md to download the publicly available NIBRS data we use.
-  2. Open code/main.do and set the local directory, then run the script.
-  3. The parameters we use are contained in params.do. Edit that file, then run main.do again to see the results of our analysis using customized parameters.
+  2. Open code/00_pipeline.do and set the local directory, then run the script.
+  3. The parameters we use are contained in params.do. Edit that file, then run 00_pipeline.do again to see the results of our analysis using customized parameters.
 
 
 
