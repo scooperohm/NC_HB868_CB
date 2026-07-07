@@ -12,7 +12,7 @@
 
 ---
 
-This GitHub repository contains the results and replication package for Spencer Cooper-Ohm And Jeff DeSimone's cost-benefit analysis of NC HB 868. It is divided into three main components:
+This GitHub repository contains the results and replication package for Spencer Cooper-Ohm and Jeff DeSimone's cost-benefit analysis of NC HB 868. It is divided into three main components:
 
 
 
