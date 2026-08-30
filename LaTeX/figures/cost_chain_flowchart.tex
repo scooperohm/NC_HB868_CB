@@ -100,7 +100,7 @@
 %% Shared right-edge coordinate -- every exit box is anchored east at this x,
 %% so their right edges all line up regardless of internal width.
 \coordinate (exitR) at (8.5, 0);
-\node[exit, anchor=east] (tn)     at (exitR |- cm)    {True result / False neg.\\};
+\node[exit, anchor=east] (tn)     at (exitR |- cm)    {True result / False neg.\\ \scriptsize $p = \pColorTN$};
 \node[exit, anchor=east] (exon)   at ($(exitR |- b) - (0,0.75)$)     {Exonerated\\ \scriptsize $p = .999$};
 
 %% -------- Bond fork (3 parallel branches) --------
@@ -134,14 +134,14 @@
 \node[exit, anchor=east] (no_cost) at (exitR |- cpres) {No-cost outcome\\ \scriptsize $p=\pNoCost$\\ \scriptsize (acquittal / diversion)};
 
 %% -------- Colormetric -> FP / TN edges --------
-\draw[arr, orange!80!black] (cm) -- node[elab, right]{$p_{\text{FP}}=\pColorFP$} (fp);
-\draw[exitarr] (cm) -- node[elab, above]{$\pColorTN$} (tn);
+\draw[arr] (cm) -- node[elab, right]{$p=\pColorFP$} (fp);
+\draw[exitarr] (cm) -- node[elab, above]{} (tn);
 \draw[arr] (fp) -- (a);
 
 %% -------- Arrest -> Booking fork (w/o law direct, w/ law via handheld) --------
 \draw[dotarr] (a) -- node[elab, right]{w/o law} (b);
 \draw[dotarr] (a) -- node[elab, above]{w/ law} (hh);
-\draw[arr] (hh.south) |- node[elab, above right, pos=0.75]{$p_{\text{FP}}=\pHandheldFP$} (b.east);
+\draw[arr] (hh.south) |- node[elab, above right, pos=0.75]{$p=\pHandheldFP$} (b.east);
 \draw[exitarr] (hh.south -| exon) -- (exon);
 
 %% -------- Forward arrows with prob labels --------
@@ -171,16 +171,6 @@
 \draw[exitarr] (br)    -- (dis_br);
 \draw[exitarr] (cp)    -- (dis_cp);
 \draw[exitarr] (cpres) -- (no_cost);
-
-%% -------- Cumulative reach-probability annotations (left column) --------
-\node[left=0.15cm of a,     font=\scriptsize\color{gray}] {$P=\PArrest$};
-\node[left=0.15cm of b,     font=\scriptsize\color{gray}] {$P=\PBook$};
-\node[left=0.15cm of ar,    font=\scriptsize\color{gray}] {$P=\PArr$};
-\node[left=0.15cm of pt,    font=\scriptsize\color{gray}] {$P=\PPre$};
-\node[left=0.15cm of br,    font=\scriptsize\color{gray}] {$P=\PBr$};
-\node[left=0.15cm of cp,    font=\scriptsize\color{gray}] {$P=\PCp$};
-\node[left=0.15cm of cpres, font=\scriptsize\color{gray}] {$P=\PCpres$};
-\node[left=0.15cm of co,    font=\scriptsize\color{gray}] {$P=\PCo$};
 
 %% -------- Legend --------
 \node[draw, rounded corners=2pt, fill=gray!5, inner sep=4pt,
