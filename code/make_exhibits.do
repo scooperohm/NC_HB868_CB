@@ -12,6 +12,9 @@
 *   4. costbenefit_timeseries.png  two side-by-side panels (baseline vs all-
 *                                  midpoint) of cumulative policy cost vs
 *                                  cumulative avoided waste, 2019 onward
+*   5. scenario_summary.tex        tabular: cost per arrest, annual colorimetric
+*                                  waste, and expected annual policy savings,
+*                                  one row per assumption scenario
 *
 * Inputs (built upstream by cost_scenarios.do):
 *   $directory\data\waste_by_scenario.dta        (scenario x drug_bucket)
@@ -251,7 +254,65 @@ graph combine g_baseline g_all_avg, rows(1) imargin(medium) xsize(9) ysize(4) //
           size(large) color(gs2))
 graph export "$figdir\costbenefit_timeseries.png", replace width(3000)
 
+
+* -----------------------------------------------------------------------------
+* EXHIBIT 5: scenario summary -- cost per arrest, colorimetric waste, savings
+* -----------------------------------------------------------------------------
+* One row per assumption scenario, all drug types pooled. Everything is put on
+* an ANNUAL basis, because the policy cost ($c_policy_annual) is defined
+* annually: annual waste is the avoided-cost benefit, and savings is that
+* benefit net of the policy's own annual cost.
+
+use "$directory\data\waste_by_scenario.dta", clear
+keep if drug_bucket == "ALL"
+keep scenario mean_cost annual_waste
+
+gen double policy_savings = annual_waste - $c_policy_annual
+
+label variable mean_cost "Expected Cost per Arrest"
+label variable annual_waste "Annual Waste"
+label variable policy_savings "Annual TruNarc Savings"
+
+* Row order + display labels, matching the column order of Exhibit 1.
+gen byte _ord = .
+gen str30 _lab = ""
+replace _ord = 1 if scenario == "baseline"
+replace _lab = "Most conservative"      if scenario == "baseline"
+replace _ord = 2 if scenario == "prob_high"
+replace _lab = "High probabilities"     if scenario == "prob_high"
+replace _ord = 3 if scenario == "cost_high"
+replace _lab = "High stage costs"       if scenario == "cost_high"
+replace _ord = 4 if scenario == "sentence_high"
+replace _lab = "High sentence lengths"  if scenario == "sentence_high"
+replace _ord = 5 if scenario == "all_avg"
+replace _lab = "All midpoint"           if scenario == "all_avg"
+sort _ord
+
+file open stbl using "$figdir\scenario_summary.tex", write replace
+file write stbl "\begin{tabular}{@{}l r r r@{}}" _n
+file write stbl "\hline" _n
+file write stbl "Scenario & Cost per arrest & Annual waste & Annual TruNarc savings \\" _n
+file write stbl "\hline" _n
+forval i = 1/`=_N' {
+    local lab = _lab[`i']
+    local cpa = trim("`: di %12.0fc mean_cost[`i']'")
+    local wst = trim("`: di %12.0fc annual_waste[`i']'")
+    local sav = trim("`: di %12.0fc policy_savings[`i']'")
+    * No $ signs in the cells: Stata reads \$ in a string as a literal $, which
+    * would open math mode in LaTeX. The units live in the caption instead.
+    file write stbl "`lab' & `cpa' & `wst' & `sav' \\" _n
+}
+file write stbl "\hline" _n
+file write stbl "\end{tabular}" _n
+file close stbl
+
+di as text ""
+di as text "===== (E5) Scenario summary (all drug types, annual basis) ====="
+list _lab mean_cost annual_waste policy_savings, noobs abbreviate(20)
+
+
 di as text ""
 di as text "make_exhibits.do complete. Wrote into $figdir :"
 di as text "  cost_by_type_scenario.tex, arrests_by_type_year.tex,"
-di as text "  results_macros.tex, costbenefit_timeseries.png"
+di as text "  results_macros.tex, costbenefit_timeseries.png,"
+di as text "  scenario_summary.tex"
