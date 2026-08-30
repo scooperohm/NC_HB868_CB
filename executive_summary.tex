@@ -1,0 +1,50 @@
+\documentclass[11pt]{article}
+\usepackage[margin=0.9in]{geometry}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{parskip}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, urlcolor=blue, linkcolor=black, citecolor=black}
+
+\definecolor{accent}{RGB}{0,84,140}
+\newcommand{\lead}[1]{\textbf{\textcolor{accent}{#1}}\hspace{0.4em}}
+
+%% Headline numbers written by make_exhibits.do; fallback lets this compile
+%% before the Stata pipeline has been run.
+\IfFileExists{figures/results_macros.tex}{\input{figures/results_macros.tex}}{}
+\providecommand{\resPolicyCost}{997,772}
+
+\providecommand{\resPolicyCostRounded}{1 million}
+
+\pagenumbering{gobble}
+
+\begin{document}
+
+\begin{center}
+    {\LARGE\bfseries A Cost-Benefit Analysis of NC HB\,868}\\[4pt]
+    {Duke Economic Analytics Laboratory\footnote{For policy and replication details, please see our attached methodology document.}}
+\end{center}
+
+\vspace{4pt}
+\hrule
+\vspace{10pt}
+
+The colorimetric drug tests that have become ubiquitous in roadside stops are cheap, yet unreliable. The Quattrone Center's review of field drug testing, \emph{Guilty Until Proven Innocent}, documents that despite high rates of false positive test results, these \$2 chemical reagent kits are routinely used to provide probable cause for arrest and the basis on which to negotiate guilty pleas. Using historical statistics on arrests and dispositions from North Carolina combined with data on the costs and likelihoods of various judicial outcomes in nearby Baltimore, Maryland, we find that:
+\begin{itemize}
+    \item Under our most conservative assumptions, by using colorimetric tests, \textbf{the state wastes an average of \$1.5 million annually on arresting, prosecuting, and imprisoning residents who did not actually violate an illegal drug law.}
+    \item When we instead assume average judicial costs and rates of progression through the criminal justice system, we find that colorimetric test usage wastes upwards of \$3.5 million annually.
+\end{itemize}
+
+\textbf{These costs account only for direct expenses to the state}, while excluding private costs like lost wages and any social costs of arresting the innocent for drug-related crimes they did not commit.
+
+As an alternative to colorimetric testing that does not decrease North Carolina's capacity to screen for drugs, we propose that police departments test all potential drugs seized in an arrest using a more reliable mechanism, such as a TruNarc handheld analyzer, during the booking process and release arrestees if the test result is negative.\footnote{This proposal parallels the testing reform that Colorado adopted in 2026.} We anticipate that this policy would cost roughly \$\resPolicyCostRounded{} per year.
+
+
+\begin{figure}[h]
+  \centering
+  \IfFileExists{figures/costbenefit_timeseries.png}{\includegraphics[width=\linewidth]{figures/costbenefit_timeseries.png}}{\textit{[run the Stata pipeline to generate this figure]}}
+\end{figure}
+
+We model the effect of hypothetically having enacted this policy in 2019, comparing these savings (blue) with the cost to police departments of purchasing the requisite equipment every four years (red dashed). \textbf{Even under our most conservative assumptions, our policy proposal under HB 868 saves a minimum of nearly \$500,000 every year and breaks even within three years of enactment}, even when accounting only for strictly public economic costs.
+
+\end{document}

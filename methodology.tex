@@ -1,0 +1,225 @@
+\documentclass{article}
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{standalone}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta, positioning, shapes.geometric, calc, fit, backgrounds}
+\usepackage{amsmath, amssymb}
+\usepackage{hyperref}
+\hypersetup{colorlinks=true, urlcolor=blue, linkcolor=black, citecolor=black}
+
+%% ============================================================
+%% Probability parameters for the cost-chain flowchart
+%% These feed figures/cost_chain_flowchart.tex, which is \input below
+%% ============================================================
+% Colorimetric (roadside) test
+\newcommand{\pColorFP}{0.037}     % colorimetric false-positive rate
+\newcommand{\pColorTN}{0.963}     % 1 - pColorFP (true neg. / false neg.)
+% Handheld (station) confirmatory test -- only used "w/ law"
+\newcommand{\pHandheldFP}{0.001}  % handheld FP rate (passes through to booking)
+% Main chain transitions
+\newcommand{\pBookFromArr}{1.00}  % Arrest -> Booking (w/o law scenario)
+\newcommand{\pArrFromBook}{1.00}  % Booking -> Arraignment
+\newcommand{\pPreFromArr}{1.00}   % Arraignment -> Pretrial
+\newcommand{\pBrFromPre}{0.95}    % Pretrial -> Bail Review
+\newcommand{\pPassBr}{0.95}       % Bail Review -> bond fork (1 - dismissed)
+\newcommand{\pDisBr}{0.05}        % Dismissed at bail review
+\newcommand{\pRel}{0.90}          % Released on recog.
+\newcommand{\pHome}{0.05}         % Home confinement
+\newcommand{\pHeld}{0.05}         % Held in custody
+\newcommand{\pPrep}{1.00}         % Bond fork -> Case Prep
+\newcommand{\pPres}{0.34}         % Case Prep -> Case Presentation
+\newcommand{\pDisCp}{0.66}        % Charges dismissed at case prep
+\newcommand{\pCoFromPres}{0.38}   % Case Presentation -> Costed Outcome
+\newcommand{\pNoCost}{0.62}       % No-cost outcome
+% Cumulative reach (per arrest, baseline / "w/o law" scenario)
+\newcommand{\PArrest}{1.000}
+\newcommand{\PBook}{1.000}
+\newcommand{\PArr}{1.000}
+\newcommand{\PPre}{0.950}
+\newcommand{\PBr}{0.950}
+\newcommand{\PCp}{0.903}
+\newcommand{\PCpres}{0.307}
+\newcommand{\PCo}{0.117}
+
+%% ============================================================
+%% Auto-generated headline numbers (written by make_exhibits.do).
+%% \providecommand fallbacks let the document compile before the
+%% Stata pipeline has been run; real values overwrite them on \input.
+%% ============================================================
+\IfFileExists{figures/results_macros.tex}{\input{figures/results_macros.tex}}{}
+\providecommand{\resNyears}{6}
+\providecommand{\resMinYear}{2019}
+\providecommand{\resMaxYear}{2024}
+\providecommand{\resArrestsTotal}{--}
+\providecommand{\resArrestsAnnual}{--}
+\providecommand{\resPolicyCost}{797,772}
+\providecommand{\resBenefitBase}{--}
+\providecommand{\resBenefitMid}{--}
+\providecommand{\resNetBase}{--}
+\providecommand{\resNetMid}{--}
+\providecommand{\resBcrBase}{--}
+\providecommand{\resBcrMid}{--}
+\providecommand{\resCostMar}{--}
+\providecommand{\resCostCoc}{--}
+\providecommand{\resCostSyn}{--}
+\providecommand{\resCostOth}{--}
+\providecommand{\resCostMarFP}{57}
+\providecommand{\resPctTests}{49.9}
+
+\title{A Cost-Benefit Analysis of NC HB 868:\\ Methodology and Results}
+\author{Spencer Cooper-Ohm, Jeff DeSimone\\ \\Duke Economic Analytics Laboratory}
+\date{\today}
+
+\begin{document}
+
+\maketitle
+
+\section{Overview}
+The colorimetric drug tests that have become ubiquitous in roadside stops are cheap, yet unreliable. The Quattrone Center's review of field drug testing, \href{https://scholarship.law.upenn.edu/qc_reports/26/}{\emph{Guilty Until Proven Innocent}}, documents that despite high false positive test rates, these \$2 chemical reagent kits are nonetheless routinely used to provide probable cause for arrest and the basis on which to negotiate guilty pleas. Drawing on surveyed agencies, the Quattrone Center estimates that roughly 49.9\% of drug arrests are based on a colorimetric test, while approximately 3.7\% of police department colorimetric test outcomes indicating drug use are in fact false positives. Even separately from various potential private and social costs of arresting the innocent for drug-related crimes they did not commit, there is a large economic cost associated with erroneously pursuing an arrest and prosecution based on the results of a false positive colorimetric test.
+
+In this document, we evaluate the economic consequences of the policy proposed by NC HB 868, which prevents the use of presumptive colorimetric drug tests to justify probable cause for an arrest. Using historical arrest and disposition statistics from North Carolina and judicial cost estimates from nearby Baltimore, Maryland, we show that by using colorimetric tests, the state annually wastes \$1.5 million under the most conservative assumptions and upwards of \$3.5 million based on average judicial costs and rates of progression through the criminal justice system. Additionally, we calculate that perhaps among many potential options, one particular alternative involving a more reliable drug screening mechanism would save the state nearly \$500,000 annually even under our most conservative assumptions.
+
+In Section 2, we detail our methodology for calculating annual wasted governmental spending associated with colorimetric testing. In Section 3, we examine the financial implications of adopting a policy of using handheld Raman spectrometers (such as the \href{https://www.thermofisher.com/us/en/home/industrial/safety-security-threat-detection/instruments/trunarc-handheld-narcotics-analyzer.html}{TruNarc analyzer}) at booking for all potential drug arrests in North Carolina. Throughout, we adopt assumptions that are deliberately conservative so that the estimated benefit constitutes a lower bound. We consider only direct monetary expenditures by the state that are avoided; no social or private benefits to innocent suspects who are spared erroneous arrest are included.
+
+\section{Assessing Waste Associated with Colorimetric Tests}
+\subsection{Summary}
+To estimate the judicial cost incurred by a drug-related arrest, prosecution, and potential conviction, we use three sources:
+\begin{itemize}
+    \item North Carolina \href{https://www.openicpsr.org/openicpsr/project/118281/version/V11/view}{NIBRS} data from \resMinYear{} to \resMaxYear{}. We analyze all arrest records that include seized drugs within the NIBRS property segment.
+    \item North Carolina sentencing statistics for the year 2024 from the \href{https://www.nccourts.gov/assets/documents/publications/SPAC-FY-2024-Statistical-Report.pdf}{SPAC FY-2024 Statistical Report}. We construct a weighted average cost of each drug-related disposition, assuming that judges administer the shortest possible sentence within the observed range.
+    \item \href{https://americanhealth.jhu.edu/sites/default/files/estimating-economic-costs-prosecuting-simple-drug-possession-baltimore-city-april-2023.pdf}{Estimates of drug prosecution costs in Baltimore from 2023}. This report contains cost estimates for each step of the criminal process from arrest to incarceration, and provides probabilities that a given defendant reaches the next step of the process conditional on reaching the previous step. We use the Baltimore report because it provides a complete picture of costs associated with the prosecution process along with probabilities for moving between steps, all in an urban area relatively proximate to North Carolina.\footnote{No analogous report exists for North Carolina of which we are aware. If such data becomes available, or if the reader wishes to test alternate assumptions for any step of this analysis, the params.do file in the associated Github repository contains all the cost and probability parameters we used to obtain our estimates. The values can easily be changed and the Stata script rerun.} For our baseline specification we take the lower-bound estimate for all values in this report, i.e., the lowest probability that a defendant advances through each step and the lowest estimated cost at each step. This ensures that our baseline estimate of the cost-saving properties of the policy is as conservative as possible.
+\end{itemize}
+
+\subsection{Cost Construction}
+Our estimates are reproducible by downloading publicly available NIBRS data and using the Stata code in this document's associated Github repository. We briefly describe below the inputs used to construct our cost estimates:
+
+\begin{enumerate}
+    \item \textbf{Arrest panel.} 
+    For arrest data, we use the North Carolina NIBRS from \resMinYear{}--\resMaxYear{}. During this period, roughly 98\% of North Carolinians were covered by NIBRS-reporting law enforcement agencies. We restrict the data to incidents involving drugs or narcotics, and remove from the sample incidents not involving a specific named drug (since all false-positive colorimetric tests will result in the identification of at least one drug). We also make the conservative decision to restrict the sample to arrests in which drugs or narcotics are seized.\footnote{This means we effectively exclude arrests involving a positive colorimetric drug test in which the officer does not seize the drugs.}
+\item \textbf{Drug charges.} Each NIBRS incident details the type and quantity of each drug seized in an arrest. We determine the offense level associated with each drug using \href{https://www.ncleg.net/EnactedLegislation/Statutes/HTML/BySection/Chapter_90/GS_90-95.html}{NC G.S.\ 90-95}. For example, an incident involving 0.4 ounces of marijuana and 1 pound of cocaine would be classified as a Class 3 misdemeanor for marijuana under G.S.\ 90-95(d)(4) and as a Class D trafficking felony for cocaine under G.S.\ 90-95(h)(3). For each incident, we assume that the most severe offense is charged and all other charges are dropped.\footnote{Again, this represents a conservative assumption even though the possibility that an arrestee accumulates multiple charges for a single instance of arrest is very real.} Thus, the above example would be coded as a Class D felony. This offense classification becomes important when we calculate the cost associated with disposition in step 4 of the sample construction.
+
+
+
+    \item \textbf{Judicial costs.}
+        We assemble the expected cost of each arrest as the probability-weighted sum of every stage of the criminal process (Figure~\ref{fig:flowchart}), from which we calculate the expected \emph{waste}, or portion of that cost attributable to colorimetric false positives.
+    Our analysis ignores the cost of true-positive colorimetric tests that result in arrest (because state spending on these arrests is justified) and of false-negative tests (because monetary and time costs of colorimetric tests are minimal). We focus on false-positive colorimetric test-based arrests, the resulting costs of which represent money unnecessarily spent on arresting, prosecuting, and imprisoning suspects who are in fact innocent.
+
+A positive colorimetric test triggers a pipeline of procedures, with each step in the pipeline incurring a cost. Individuals implicated by colorimetric tests are arrested, booked, arraigned, and put through the bail process. Then, the state must spend additional funds on case preparation and presentation, including plea procedures. If the defendant is found guilty, money must be spent on dispositions. We estimate the expected cost of an arrest as the sum of the cost of each step $i$ times the cumulative probability $P$ of reaching $i$. The probabilities and costs used in our baseline model are shown in Figure~\ref{fig:flowchart}.
+
+\begin{figure}[p]
+  \centering
+  \resizebox{0.8\textwidth}{!}{\input{figures/cost_chain_flowchart}}
+  \caption{Per-Arrest Cost Chain.}
+  \label{fig:flowchart}
+\end{figure}
+
+    \item \textbf{Disposition costs.} To determine disposition type and length resulting from a guilty outcome, we rely on Tables 4 and 19 from the \href{https://www.nccourts.gov/assets/documents/publications/SPAC-FY-2024-Statistical-Report.pdf}{SPAC FY-2024 Statistical Report}, which provide the prior record level of North Carolina defendants convicted at each offense class as well as the disposition type and sentence range of each offense class conditional on prior record. Table~\ref{tab:spac_class_d} reproduces the Class~D row of SPAC Table~4 (the relevant row for the cocaine example above).
+
+\begin{table}[h]
+\centering
+\small
+\caption{An example row (Class D Felony) from the SPAC Report Table 4: convictions by prior record level and disposition type.}
+\label{tab:spac_class_d}
+\resizebox{\textwidth}{!}{%
+\begin{tabular}{c|cccccc|c}
+\hline
+ & \multicolumn{6}{c|}{Prior Record Level} & \\
+ & I & II & III & IV & V & VI & Total \\
+ & 0--1 pt & 2--5 pt & 6--9 pt & 10--13 pt & 14--17 pt & 18+ pt & \\
+\hline
+Community     & 0          & 0           & 0           & 0           & 0          & 0           & 0 \\
+Intermediate  & 19 (6\%)   & 0           & 0           & 0           & 0          & 0           & 19 (2\%) \\
+Active        & 308 (94\%) & 139 (100\%) & 107 (100\%) & 102 (100\%) & 73 (100\%) & 106 (100\%) & 835 (98\%) \\
+\hline
+Total $n$     & 327        & 139         & 107         & 102         & 73         & 106         & 854 \\
+Avg min (mo)  & 52         & 59          & 66          & 75          & 83         & 98          & -- \\
+Avg max (mo)  & 77         & 84          & 92          & 103         & 114        & 131         & -- \\
+\hline
+\end{tabular}%
+}
+\end{table}
+
+The expected sentence cost for an offense at class~$O$ is
+$$
+    E[\$\mid O] \;=\;
+        \sum_{D \in \{A,I,C\}}\; \sum_{P = \text{I}}^{\text{VI}}
+        C(D)\,S(D, P, O)\,\mathbb{P}(D\mid P, O)\,\mathbb{P}(P\mid O),
+$$
+where:
+\begin{itemize}
+    \item $D \in \{A, I, C\}$ is the disposition type: active (prison), intermediate, or community punishment. $C(D)$ is the monthly cost associated with each disposition.
+    \item $P \in \{\text{I}, \dots, \text{VI}\}$ is the prior record level and $O$ is the offense class.
+    \item $S(D, P, O)$ is the expected sentence length in months. For active sentences this is the SPAC Table~4 average-minimum-sentence cell. For intermediate and community probation, the length is the minimum of the default range in \href{https://www.ncleg.net/EnactedLegislation/Statutes/HTML/BySection/Chapter_15A/GS_15A-1343.2.html}{G.S.\ 15A-1343.2(d)}.
+\end{itemize}
+Trafficking offenses are the exception. G.S.\ 90-95(h) mandates fixed minimums regardless of prior record or judicial discretion, so for those rows we override the empirical mix with a 100\% active disposition at the statutory sentence.
+
+\end{enumerate}
+
+
+\section{The Cost of Colorimetrics}\label{sec:results}
+We generate a range of cost estimates based on various underlying assumptions. Because the Baltimore study provides intervals rather than point estimates, we report results under five specifications. Each varies one family of assumptions while holding the others at their conservative floors except the last, which moves all values to their midpoints:
+\begin{itemize}
+    \item \textbf{Baseline}: lowest stage-transition probabilities, lowest stage costs, and shortest (minimum) sentences. This is the most conservative case.
+    \item \textbf{High Probabilities}: highest probabilities of advancing through the system; costs and sentences at their floors.
+    \item \textbf{High Cost}: highest per-stage costs; probabilities and sentences at their floors.
+    \item \textbf{High Sentencing}: longest (maximum) sentences; probabilities and costs at their floors.
+    \item \textbf{All Midpoints}: probabilities, costs, and sentence lengths all set to the midpoint of their ranges.
+\end{itemize}
+
+Table~\ref{tab:cost_by_type} reports the resulting expected legal-system cost per arrest, broken out by the four major drug categories (marijuana, opium or cocaine, synthetic narcotics, and other dangerous non-narcotics). Under the baseline specification, the expected cost is approximately \$\resCostMar{} for a marijuana arrest, \$\resCostCoc{} for an opium/cocaine arrest, \$\resCostSyn{} for a synthetic-narcotics arrest, and \$\resCostOth{} for an other-non-narcotics arrest.
+
+\begin{table}[h]
+\centering
+\small
+\caption{Expected legal-system cost per drug arrest (\$), by drug type and model specification.}
+\label{tab:cost_by_type}
+\IfFileExists{figures/cost_by_type_scenario.tex}{\input{figures/cost_by_type_scenario.tex}}{\textit{[run the Stata pipeline to generate this table]}}
+\end{table}
+
+At baseline, the implicit costs of colorimetric tests are already apparent. Each drug arrest incurs a cost to the judicial system of between \$1,500 and \$3,500. With a false positive rate of 3.7\%, every colorimetric test used to make an arrest, even for a low-level charge like marijuana possession, is associated with an expected \$\resCostMarFP{} worth of costs to the government at minimum.
+
+\begin{table}[h]
+\centering
+\small
+\caption{North Carolina drug arrests with seized, named drugs, by category and year (NIBRS).}
+\label{tab:arrests_by_type}
+\IfFileExists{figures/arrests_by_type_year.tex}{\input{figures/arrests_by_type_year.tex}}{\textit{[run the Stata pipeline to generate this table]}}
+\end{table}
+
+Multiplying these costs by the roughly 30,000 drug arrests that occur in North Carolina every year (Table~\ref{tab:arrests_by_type}) reveals that the potential savings are extremely large. In total, using an estimate from the Quattrone report that \resPctTests{}\% of drug arrests rely on a colorimetric test, our lower bound estimate is that the elimination of colorimetric tests for establishing probable cause would save \$\resBenefitBase{} annually, not including the cost of purchasing colorimetrics. With our midpoint estimate, those savings rise to \$\resBenefitMid{}.
+
+
+
+
+
+\section{Policy Alternative}
+
+As an alternative to colorimetric testing that does not decrease North Carolina's capacity to screen for drugs, we propose that police departments (i) postpone testing of drugs seized in an arrest until the suspect is booked and then (ii) do so using a more reliable mechanism. If this test comes back positive, the judicial process, starting with the arrest, would continue unaltered. However, if the test is negative, the suspect would be released, saving the state the potential costs of booking, charging, prosecuting, and imprisoning an innocent person.\footnote{Our proposed alternative is in the same spirit as the reform Colorado adopted in 2026, when it became the first state to bar arrests based solely on a colorimetric field test. Colorado's \href{https://leg.colorado.gov/bills/HB26-1020}{HB26-1020} (signed March 26, 2026) requires officers to issue a summons rather than make an arrest when a person is suspected of low-level drug possession only on the basis of a colorimetric test, and entitles defendants to confirmatory testing by an accredited laboratory.}
+
+\begin{table}[h]
+\centering
+\small
+\caption{Costs and policy benefits (\$) by scenario.}
+\label{tab:scenario_costs}
+\IfFileExists{figures/scenario_summary.tex}{\input{figures/scenario_summary.tex}}{\textit{[run the Stata pipeline to generate this table]}}
+\end{table}
+
+The recurring cost of the policy is the annualized statewide expense of equipping all 109 county detention facilities with a TruNarc analyzer or equivalent instrument (which we conservatively assume must be replaced after four years, although these devices do not have a specified obsolescence date), which statewide is estimated as \$\resPolicyCost{} per year. The benefit is the colorimetric waste avoided, obtained by summing the expected per-arrest waste over every arrest in the data. Under the most conservative (baseline) specification, the avoided waste is approximately \$\resBenefitBase{} per year, representing a net annual benefit of \$\resNetBase{} and a benefit-cost ratio of about \resBcrBase{} to 1 (Table~\ref{tab:scenario_costs}). Under the all-midpoint specification, the avoided waste rises to approximately \$\resBenefitMid{} per year, for a net annual benefit of \$\resNetMid{} and a benefit-cost ratio of about \resBcrMid{} to 1.
+
+\begin{figure}[h]
+  \centering
+  \IfFileExists{figures/costbenefit_timeseries.png}{\includegraphics[width=\textwidth]{figures/costbenefit_timeseries.png}}{\textit{[run the Stata pipeline to generate this figure]}}
+  \caption{Cumulative costs and benefits of statewide confirmatory testing from 2019: most conservative assumptions (left) and midpoint assumptions (right). The benefit line is cumulative colorimetric waste avoided; the cost line is the cumulative cost of the analyzers, purchased as a fleet up front and re-purchased every four years.}
+  \label{fig:costbenefit}
+\end{figure}
+
+Figure~\ref{fig:costbenefit} models the effect of having hypothetically enacted this policy in 2019. The blue line represents cumulative waste avoided, while the red dashed line represents the cost of purchasing the requisite TruNarc analyzers for North Carolina police departments and repurchasing the analyzers every four years. The left panel uses the most conservative assumptions; the right panel uses the midpoint of every assumption. In both, cumulative benefit overtakes cumulative cost and the gap widens over time. Even under our most conservative assumptions, and despite a steady decline in drug arrests over the sample period (from 38,101 in 2019 to 29,934 in 2024), our policy proposal breaks even within three years of enactment.
+
+
+\section{Conclusion}
+Under the most conservative set of assumptions and accounting for strictly economic costs to the state of North Carolina, a policy of eliminating colorimetric tests while maintaining the same level of drug screening in the state would save close to \$500,000 annually. Even with a high upfront investment in drug scanners, the state would break even on its investment within three years. 
+
+Our estimate of avoided costs would certainly be higher if we included private externalities (e.g. lost wages) or social costs of arresting innocent individuals as a result of arrests based on false positive drug tests, and our proposed policy alternative may not be the most cost-effective policy. These possibilities could be explored in further expert analysis. Our report simply points out the millions of dollars of potential savings that would result from ceasing the use of colorimetric tests under one specific alternative testing scenario.
+
+\end{document}
